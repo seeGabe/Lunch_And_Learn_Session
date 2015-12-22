@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Random Test Data</title>
+    <!-- You need to be running this on a localhost / server
+        so that you can make the $http (XHR) calls and hit CDNs -->
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.29/angular.min.js"></script>
+    <script>
+      angular.module('DummyDataApp', [])
+        .factory('ShareService',function(){
+          return {
+            inputfilter:{
+              nameCount:6,
+              countOptions : [3,6,9,12]
+            },
+            dummydata:{
+              names:{
+                // fname:'',
+                // address:{
+                //   streetAddress:'',
+                //   city:'',
+                //   state:'',
+                //   zip:''
+                // }
+              }
+            }
+          };    
+        })
+        .factory('DataService', ['$http','ShareService',function($http,ShareService){
+          
+          var getNames = function(count){
+            /**
+            * retrieves random first names from API
+            * @param {number} count The value from nameCount select box
+            */
+            
+            $http({
+              method: 'jsonp',
+              url: 'http://www.filltext.com/?rows='+count+'&id={index}&fname={firstName}&address={addressObject}&callback=JSON_CALLBACK'
+            }).success(function(data){
+              ShareService.dummydata.names=data;
+                console.log('names'+ JSON.stringify(data));
+
+            // $http.jsonp('http://www.filltext.com/?rows='+count+'&id={index}&fname={firstName}&address={addressObject}&callback=JSON_CALLBACK').success(function(data){
+            //   ShareService.dummydata.names=data;
+            //     console.log('names'+ JSON.stringify(data));
+
+            });
+          };
+
+          return{
+            getNames:getNames
+          }
+        }])
+        .controller('FirstController', ['$scope','ShareService','DataService',function($scope,ShareService,DataService){
+
+          this.inputfilter = ShareService.inputfilter;
+          this.dummydata = ShareService.dummydata;
+          this.countOptions = ShareService.inputfilter.countOptions;
+
+          $scope.$watch('vm.inputfilter',
+            function(newvalue,oldvalue){
+              this.inputfilter = newvalue;
+              console.log('CHANGE DETECTED -- current values are: '+ JSON.stringify(this.inputfilter));
+              console.log(ShareService.inputfilter);
+              console.log(this.inputfilter);
+              DataService.getNames(ShareService.inputfilter.nameCount);
+          },true);
+        }]);
+
+    </script>
+  </head>
+
+  <body ng-app="DummyDataApp">
+    <div class="container" ng-view>
+      <div ng-controller="FirstController as vm">
+        <div class="row">
+          <div class="col-sm-6">
+            <select ng-model="vm.inputfilter.nameCount" ng-options="n for n in vm.inputfilter.countOptions">nameCount</select>
+            <label>More names</label>
+          </div>
+        </div
+      </div>
+
+      <div class="row">
+        <h2>Random Names</h2>
+        <table class="table">
+          <tbody>
+            <tr ng-repeat="name in vm.dummydata.names">
+              <td>{{name.fname}}</td>
+              <td>{{name.address.streetAddress}}</td>
+              <td>{{name.address.city}}</td>
+              <td>{{name.address.state}}</td>
+              <td>{{name.address.zip}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
